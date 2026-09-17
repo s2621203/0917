@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>평촌고등학교 급식 정보</title>
+  <style>
+    :root {
+      --primary-color: #4a90e2;
+      --danger-color: #e74c3c;
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: #333;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    /* 설정 섹션 */
+    .section {
+      margin-bottom: 20px;
+      background: #fafafa;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 날짜 선택 컨트롤 (버튼 + Input) */
+    .date-controller {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .date-btn {
+      background: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .date-btn:hover {
+      background: #f0f0f0;
+    }
+
+    input[type="date"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline: none;
+      text-align: center;
+    }
+
+    /* 알레르기 체크박스 그룹 */
+    .allergy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .allergy-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .allergy-item input {
+      margin-right: 5px;
+    }
+
+    /* 급식 결과 카드 */
+    .meal-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .meal-type {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 5px;
+    }
+
+    .meal-list {
+      list-style: none;
+    }
+
+    .meal-item {
+      padding: 8px 0;
+      border-bottom: 1px dashed #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .meal-item:last-child {
+      border-bottom: none;
+    }
+
+    /* 알레르기 경고 및 취소선 스타일 */
+    .meal-item.allergy-warn .menu-name {
+      color: var(--danger-color);
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      font-weight: bold;
+    }
+
+    .warn-badge {
+      display: none;
+      color: var(--danger-color);
+      font-size: 0.8rem;
+      font-weight: bold;
+      background-color: #fde8e8;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #f8b4b4;
+    }
+
+    .meal-item.allergy-warn .warn-badge {
+      display: inline-block;
+    }
+
+    .loading, .no-data {
+      text-align: center;
+      padding: 30px;
+      color: #777;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🏫 평촌고등학교 급식 정보</h1>
+
+    <!-- 날짜 선택 컨트롤 -->
+    <div class="section">
+      <div class="section-title">📅 날짜 선택</div>
+      <div class="date-controller">
+        <button class="date-btn" onclick="changeDate(-1)">◀ 이전날</button>
+        <input type="date" id="meal-date">
+        <button class="date-btn" onclick="changeDate(1)">다음날 ▶</button>
+      </div>
+    </div>
+
+    <!-- 알레르기 설정 -->
+    <div class="section">
+      <div class="section-title">
+        <span>⚠️ 내 알레르기 등록</span>
+        <span style="font-size: 0.75rem; color: #888; font-weight: normal;">(자동 저장됨)</span>
+      </div>
+      <div class="allergy-grid" id="allergy-options">
+        <!-- JS 동적 생성 -->
+      </div>
+    </div>
+
+    <!-- 급식 정보 표시 영역 -->
+    <div id="meal-container">
+      <div class="loading">급식 정보를 불러오는 중입니다...</div>
+    </div>
+  </div>
+
+  <script>
+    // 식약처 지정 18가지 기본 알레르기 정보
+    const ALLERGY_MAP = {
+      1: "난류", 2: "우유", 3: "메밀", 4: "땅콩", 5: "대두",
+      6: "밀", 7: "게", 8: "새우", 9: "돼지고기", 10: "복숭아",
+      11: "토마토", 12: "아황산류", 13: "호두", 14: "닭고기",
+      15: "쇠고기", 16: "오징어", 17: "조개류", 18: "잣"
+    };
+
+    const API_BASE_URL = "https://open.neis.go.kr/hub/mealServiceDietInfo?ATPT_OFCDC_SC_CODE=J10&SD_SCHUL_CODE=7530131";
+
+    const dateInput = document.getElementById("meal-date");
+    const allergyContainer = document.getElementById("allergy-options");
+    const mealContainer = document.getElementById("meal-container");
+
+    let myAllergies = JSON.parse(localStorage.getItem("myAllergies")) || [];
+
+    // 1. 초기화 함수
+    function init() {
+      // 기본 날짜를 '오늘'로 지정 (YYYY-MM-DD)
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+
+      // 알레르기 체크박스 목록 생성
+      renderAllergyCheckboxes();
+
+      // [핵심] 날짜 변경 시 API 재요청 이벤트 등록 (달력 클릭 및 키보드 입력 대응)
+      dateInput.addEventListener("change", fetchMealData);
+      dateInput.addEventListener("input", fetchMealData);
+
+      // 첫 로드 시 오늘 날짜 급식 불러오기
+      fetchMealData();
+    }
+
+    // 2. 날짜 이동 버튼 클릭 시 (-1일, +1일)
+    function changeDate(days) {
+      if (!dateInput.value) return;
+      const currentDate = new Date(dateInput.value);
+      currentDate.setDate(currentDate.getDate() + days);
+      
+      // YYYY-MM-DD 형식으로 변환하여 input에 할당
+      dateInput.value = currentDate.toISOString().split('T')[0];
+      
+      // 급식 데이터 다시 불러오기
+      fetchMealData();
+    }
+
+    // 3. 알레르기 체크박스 UI 그려주기
+    function renderAllergyCheckboxes() {
+      allergyContainer.innerHTML = "";
+      Object.keys(ALLERGY_MAP).forEach(code => {
+        const name = ALLERGY_MAP[code];
+        const label = document.createElement("label");
+        label.className = "allergy-item";
+        
+        const isChecked = myAllergies.includes(code) ? "checked" : "";
+        label.innerHTML = `
+          <input type="checkbox" value="${code}" ${isChecked} onchange="toggleAllergy('${code}')">
+          ${name}
+        `;
+        allergyContainer.appendChild(label);
+      });
+    }
+
+    // 4. 사용자 알레르기 저장/해제
+    function toggleAllergy(code) {
+      if (myAllergies.includes(code)) {
+        myAllergies = myAllergies.filter(item => item !== code);
+      } else {
+        myAllergies.push(code);
+      }
+      localStorage.setItem("myAllergies", JSON.stringify(myAllergies));
+      
+      // 취소선 및 경고 필터 재적용
+      applyAllergyFilter();
+    }
+
+    // 5. NEIS API (XML) 요청 및 파싱
+    async function fetchMealData() {
+      const selectedDate = dateInput.value.replace(/-/g, ""); // YYYYMMDD 변환
+      if (!selectedDate || selectedDate.length !== 8) return;
+
+      mealContainer.innerHTML = '<div class="loading">급식 정보를 불러오는 중입니다...</div>';
+
+      try {
+        const url = `${API_BASE_URL}&MLSV_YMD=${selectedDate}`;
+        const response = await fetch(url);
+        const xmlText = await response.text();
+
+        // XML DOMParser 사용
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+        // RESULT CODE 확인 (주말이나 방학 등 급식이 없는 경우 처리)
+        const resultCode = xmlDoc.querySelector("RESULT CODE")?.textContent;
+        if (resultCode && resultCode !== "INFO-000") {
+          const msg = xmlDoc.querySelector("RESULT MESSAGE")?.textContent || "해당 날짜에 급식 정보가 없습니다.";
+          mealContainer.innerHTML = `<div class="no-data">ℹ️ ${msg}</div>`;
+          return;
+        }
+
+        const rows = xmlDoc.querySelectorAll("row");
+        if (rows.length === 0) {
+          mealContainer.innerHTML = `<div class="no-data">해당 날짜에 급식 정보가 없습니다 (주말/공휴일/재량휴업일 등).</div>`;
+          return;
+        }
+
+        renderMealList(rows);
+      } catch (error) {
+        console.error("API 요청 에러:", error);
+        mealContainer.innerHTML = `<div class="no-data">데이터를 불러오는 중 오류가 발생했습니다.</div>`;
+      }
+    }
+
+    // 6. XML 파싱 결과를 화면에 출력
+    function renderMealList(rows) {
+      mealContainer.innerHTML = "";
+
+      rows.forEach(row => {
+        const mealType = row.querySelector("MMEAL_SC_NM")?.textContent || "급식";
+        const rawDishNm = row.querySelector("DDISH_NM")?.textContent || "";
+
+        const card = document.createElement("div");
+        card.className = "meal-card";
+
+        let html = `<div class="meal-type">${mealType}</div><ul class="meal-list">`;
+
+        // 메뉴 항목 분리 (API에서 <br/> 태그로 구분되어 넘어옴)
+        const menuItems = rawDishNm.split("<br/>");
+
+        menuItems.forEach(item => {
+          if (!item.trim()) return;
+
+          // 식재료 원산지/알레르기 번호 제거 후 메뉴명 순수하게 정제
+          const cleanName = item.replace(/\([^\)]*\)/g, "").replace(/[0-9.]/g, "").trim();
+          
+          // 메뉴에 포함된 알레르기 번호들 추출 (예: "5.6.13." -> ["5", "6", "13"])
+          const allergyNumbers = item.match(/\d+/g) || [];
+
+          html += `
+            <li class="meal-item" data-allergies="${allergyNumbers.join(',')}">
+              <span class="menu-name">${cleanName}</span>
+              <span class="warn-badge">⚠️ 경고</span>
+            </li>
+          `;
+        });
+
+        html += `</ul>`;
+        card.innerHTML = html;
+        mealContainer.appendChild(card);
+      });
+
+      // 알레르기 경고/취소선 상태 갱신
+      applyAllergyFilter();
+    }
+
+    // 7. 알레르기 번호 매칭 검사 및 빨간 취소선/경고 처리
+    function applyAllergyFilter() {
+      const items = document.querySelectorAll(".meal-item");
+
+      items.forEach(item => {
+        const itemAllergies = item.getAttribute("data-allergies") ? item.getAttribute("data-allergies").split(",") : [];
+        
+        // 내 알레르기와 일치하는 성분이 하나라도 있는지 체크
+        const hasConflict = itemAllergies.some(code => myAllergies.includes(code));
+
+        if (hasConflict) {
+          item.classList.add("allergy-warn");
+        } else {
+          item.classList.remove("allergy-warn");
+        }
+      });
+    }
+
+    // 페이지 로드 완료 시 초기화 실행
+    window.onload = init;
+  </script>
+</body>
+</html>
